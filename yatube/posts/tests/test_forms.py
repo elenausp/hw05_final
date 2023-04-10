@@ -38,15 +38,14 @@ class PostFormCreateTests(TestCase):
             group=cls.group,
         )
 
+        cls.guest_client = Client()
+        cls.authorized_client = Client()
+        cls.authorized_client.force_login(cls.user)
+
     @classmethod
     def tearDownClass(cls):
         super().tearDownClass()
         shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
-
-    def setUp(self):
-        self.guest_client = Client()
-        self.authorized_client = Client()
-        self.authorized_client.force_login(self.user)
 
     def test_create_post(self):
         """Форма создания новой записи в БД валидна"""
@@ -144,13 +143,15 @@ class FollowFormTest(TestCase):
             username='no_follow',
         )
 
-    def setUp(self):
+        cls.guest_client = Client()
+        cls.authorized_client = Client()
+        cls.authorized_client.force_login(cls.user)
+        cls.authorized_client_no_follow = Client()
+        cls.authorized_client_no_follow.force_login(cls.user_no_follow)
+
         cache.clear()
-        self.guest_client = Client()
-        self.authorized_client = Client()
-        self.authorized_client.force_login(self.user)
-        self.authorized_client_no_follow = Client()
-        self.authorized_client_no_follow.force_login(self.user_no_follow)
+        # Не совсем уверена на каком уровне в данном случае надо 
+        # проводить очистку кэша
 
     def test_follow_author(self):
         "Проверка записей у тех кто подписан"

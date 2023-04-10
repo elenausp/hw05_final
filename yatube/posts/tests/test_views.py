@@ -28,16 +28,17 @@ class PostPagesTests(TestCase):
             text='Тестовый пост',
         )
 
+        cls.guest_client = Client()
+        cls.authorized_client = Client()
+        cls.authorized_client.force_login(cls.user)
+
     @classmethod
     def tearDownClass(cls):
         super().tearDownClass()
         shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
 
     def setUp(self):
-        self.guest_client = Client()
         cache.clear()
-        self.authorized_client = Client()
-        self.authorized_client.force_login(self.user)
 
     def test_context(self):
         """Шаблон сформирован с правильным контекстом."""

@@ -22,12 +22,13 @@ class PostRoutesTests(TestCase):
 
         cls.follower = User.objects.create_user(username='user')
 
-    def setUp(self):
-        self.guest_client = Client()
-        self.authorized_client = Client()
-        self.authorized_client.force_login(self.user)
-        self.follower_client = Client()
-        self.follower_client.force_login(self.follower)
+        cls.guest_client = Client()
+        cls.authorized_client = Client()
+        cls.authorized_client.force_login(cls.user)
+        cls.author = Client()
+        cls.author.force_login(cls.user)
+        cls.follower_client = Client()
+        cls.follower_client.force_login(cls.follower)
 
     def test_checking_availability_pages(self):
         """доступность страниц для неавторизованного пользователя."""
@@ -40,6 +41,9 @@ class PostRoutesTests(TestCase):
             '/create/': HTTPStatus.FOUND,
             f'/posts/{self.post.id}/edit/': HTTPStatus.FOUND,
             '/unexisting_page/': HTTPStatus.NOT_FOUND,
+            '/follow/': HTTPStatus.FOUND,
+            f'/profile/{self.user}/follow/': HTTPStatus.FOUND,
+            f'/profile/{self.user}/unfollow/': HTTPStatus.FOUND,
         }
         for page, status in url_pages.items():
             with self.subTest(page=page, status=status):
@@ -51,10 +55,10 @@ class PostRoutesTests(TestCase):
         url_pages_authorized = {
             '/create/': HTTPStatus.OK,
             f'/posts/{self.post.id}/edit/': HTTPStatus.OK,
-            f'posts/{self.post.id}/comment/': HTTPStatus.NOT_FOUND,
-            'follow/': HTTPStatus.NOT_FOUND,
-            'profile/auth/follow/': HTTPStatus.NOT_FOUND,
-            'profile/auth/unfollow/': HTTPStatus.NOT_FOUND,
+            f'/posts/{self.post.id}/comment/': HTTPStatus.FOUND,
+            '/follow/': HTTPStatus.OK,
+            f'/profile/{self.user}/follow/': HTTPStatus.FOUND,
+            f'/profile/{self.user}/unfollow/': HTTPStatus.NOT_FOUND,
         }
         for page2, status2 in url_pages_authorized.items():
             with self.subTest(page2=page2, status2=status2):
@@ -63,5 +67,18 @@ class PostRoutesTests(TestCase):
 
     def test_redirects(self):
         """Редирект для неавторизованных пользователей"""
-        response = self.guest_client.get('/create/', follow=True)
-        self.assertRedirects(response, '/auth/login/?next=/create/')
+        urls = {
+            '/create/': '/auth/login/?next=/create/',
+            '/follow/': '/auth/login/?next=/follow/',
+            f'/profile/{self.user.username}/follow':
+            f'/auth/login/?next=/profile/{self.user.username}/',
+        }
+        for url, redirect in urls.items():
+            with self.subTest(url=url):
+                response = self.guest_client.get(url, follow=True)
+                self.assertRedirects(response, redirect)
+
+    def test_profile_follow_redirect_author(self):
+        """Редирект если автор подписывается на самого себя"""
+        response = self.author.get(f'/profile/{self.author}/follow')
+        self.assertRedirects(response, f'/profile/{self.author}/follow')

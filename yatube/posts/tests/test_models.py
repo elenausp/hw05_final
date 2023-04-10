@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
-from posts.models import Group, Post, NUM
+from posts.models import Group, Post, Comment, Follow, NUM
 
 User = get_user_model()
 
@@ -11,6 +11,7 @@ class PostModelTest(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.author = User.objects.create_user(username='auth')
+        cls.user_follower = User.objects.create_user(username='user_follower')
         cls.group = Group.objects.create(
             title='Тестовая группа',
             slug='test_slug',
@@ -21,6 +22,15 @@ class PostModelTest(TestCase):
             group=cls.group,
             text='Тестовый пост',
         )
+        cls.comment = Comment.objects.create(
+            author=cls.author,
+            text="Тестовый комментарий",
+            post=cls.post
+        )
+        cls.follow = Follow.objects.create(
+            author=cls.author,
+            user=cls.user_follower,
+        )
 
     def test_models_post(self):
         """Проверяем что у моделей пост корректно работает __str__"""
@@ -29,6 +39,10 @@ class PostModelTest(TestCase):
     def test_models_group(self):
         """Проверяем что у групп корректно работает __str__"""
         self.assertEqual(self.group.title, self.group.__str__())
+
+    def test_models_comment(self):
+        """Проверяем что у моделей пост корректно работает __str__"""
+        self.assertEqual(str(self.comment), self.comment.text[:NUM])
 
     def test_post_verbose_name(self):
         """Проверка verbose_name у post."""
@@ -74,3 +88,23 @@ class PostModelTest(TestCase):
             with self.subTest(value=value):
                 help_text = self.group._meta.get_field(value).help_text
                 self.assertEqual(help_text, expected)
+
+    def test_verbose_name(self):
+        field_verboses = [
+            (post, 'text', 'Текст поста'),
+            (post, 'pub_date', 'Дата публикации'),
+            (post, 'author', 'Автор'),
+            (post, 'group', 'Группа'),
+            (group, 'title', "Название группы"),
+            (group, 'description', "Описание группы"),
+            (comment, 'post', 'Пост'),
+            (comment, 'author', 'Автор'),
+            (comment, 'text', 'Текст комментария'),
+            (comment, 'created', 'Дата публикации комментария'),
+            (follow, 'user', 'Пользователь'),
+            (follow, 'author', 'Автор'),
+        ]
+        for model, name, value in field_verboses:
+            with self.subTest(model=model, value=value, name=name):
+                verbose_name = self.model._meta.get_field(value).verbose_name
+                self.assertEqual(verbose_name, name)
