@@ -150,7 +150,7 @@ class FollowFormTest(TestCase):
         cls.authorized_client_no_follow.force_login(cls.user_no_follow)
 
         cache.clear()
-        # Не совсем уверена на каком уровне в данном случае надо 
+        # Не совсем уверена на каком уровне в данном случае надо
         # проводить очистку кэша
 
     def test_follow_author(self):
