@@ -44,67 +44,34 @@ class PostModelTest(TestCase):
         """Проверяем что у моделей пост корректно работает __str__"""
         self.assertEqual(str(self.comment), self.comment.text[:NUM])
 
-    def test_post_verbose_name(self):
-        """Проверка verbose_name у post."""
-        field_verbos = {
-            'text': 'Текст поста',
-            'pub_date': 'Дата публикации',
-            'author': 'Автор',
-            'group': 'Группа',
-        }
-        for value, expected in field_verbos.items():
-            with self.subTest(value=value):
-                verbose_name = self.post._meta.get_field(value).verbose_name
-                self.assertEqual(verbose_name, expected)
-
-    def test_post_help_text(self):
-        """Проверка help_text у post."""
-        field_help_texts = {
-            'text': 'Введите текст поста',
-            'group': 'Группа, к которой будет относиться пост',
-        }
-        for value, expected in field_help_texts.items():
-            with self.subTest(value=value):
-                help_text = self.post._meta.get_field(value).help_text
-                self.assertEqual(help_text, expected)
-
-    def test_group_verbose_name(self):
-        """Проверка verbose_name у групп."""
-        field_verboses = {
-            'title': "Название группы",
-            'description': "Описание группы",
-        }
-        for value, expected in field_verboses.items():
-            with self.subTest(value=value):
-                verbose_name = self.group._meta.get_field(value).verbose_name
-                self.assertEqual(verbose_name, expected)
-
-    def test_group_help_text(self):
-        """Проверка help_text у групп."""
-        field_help_texts = {
-            'description': "Опишите группу",
-        }
-        for value, expected in field_help_texts.items():
-            with self.subTest(value=value):
-                help_text = self.group._meta.get_field(value).help_text
-                self.assertEqual(help_text, expected)
-
     def test_verbose_name(self):
         field_verboses = [
-            (post, 'text', 'Текст поста'),
-            (post, 'pub_date', 'Дата публикации'),
-            (post, 'author', 'Автор'),
-            (post, 'group', 'Группа'),
-            (group, 'title', "Название группы"),
-            (group, 'description', "Описание группы"),
-            (comment, 'post', 'Пост'),
-            (comment, 'author', 'Автор'),
-            (comment, 'text', 'Текст комментария'),
-            (comment, 'created', 'Дата публикации комментария'),
-            (follow, 'user', 'Пользователь'),
-            (follow, 'author', 'Автор'),
+            (self.post, 'text', 'Текст поста'),
+            (self.post, 'pub_date', 'Дата публикации'),
+            (self.post, 'author', 'Автор'),
+            (self.post, 'group', 'Группа'),
+            (self.group, 'title', "Название группы"),
+            (self.group, 'description', "Описание группы"),
+            (self.comment, 'post', 'Пост'),
+            (self.comment, 'author', 'Автор'),
+            (self.comment, 'text', 'Текст комментария'),
+            (self.comment, 'created', 'Дата публикации комментария'),
+            (self.follow, 'user', 'Пользователь'),
+            (self.follow, 'author', 'Автор'),
         ]
         for model, name, value in field_verboses:
-            with self.subTest(model=model, value=value, name=name):
-                verbose_name = self.model._meta.get_field(value).verbose_name
-                self.assertEqual(verbose_name, name)
+            with self.subTest(name=name):
+                verbose_name = model._meta.get_field(name).verbose_name
+                self.assertEqual(verbose_name, value)
+
+    def test_help_text(self):
+        field_help_text = [
+            (self.post, 'text', 'Введите текст поста',),
+            (self.post, 'group', 'Группа, к которой будет относиться пост'),
+            (self.group, 'description', 'Опишите группу'),
+            (self.comment, 'text', 'Введите текст'),
+        ]
+        for model, help_text, value in field_help_text:
+            with self.subTest(help_text=help_text):
+                help_text_response = model._meta.get_field(help_text).help_text
+                self.assertEqual(help_text_response, value)

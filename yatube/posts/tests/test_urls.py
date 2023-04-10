@@ -25,8 +25,6 @@ class PostRoutesTests(TestCase):
         cls.guest_client = Client()
         cls.authorized_client = Client()
         cls.authorized_client.force_login(cls.user)
-        cls.author = Client()
-        cls.author.force_login(cls.user)
         cls.follower_client = Client()
         cls.follower_client.force_login(cls.follower)
 
@@ -70,15 +68,15 @@ class PostRoutesTests(TestCase):
         urls = {
             '/create/': '/auth/login/?next=/create/',
             '/follow/': '/auth/login/?next=/follow/',
-            f'/profile/{self.user.username}/follow':
-            f'/auth/login/?next=/profile/{self.user.username}/',
+            f'/profile/{self.user.username}/follow/':
+            f'/auth/login/?next=/profile/{self.user.username}/follow/',
         }
         for url, redirect in urls.items():
             with self.subTest(url=url):
-                response = self.guest_client.get(url, follow=True)
+                response = self.guest_client.get(url)
                 self.assertRedirects(response, redirect)
 
     def test_profile_follow_redirect_author(self):
         """Редирект если автор подписывается на самого себя"""
-        response = self.author.get(f'/profile/{self.author}/follow')
-        self.assertRedirects(response, f'/profile/{self.author}/follow')
+        response = self.authorized_client.get(f'/profile/{self.user}/follow/')
+        self.assertRedirects(response, '/follow/')
