@@ -5,7 +5,7 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
-NUM = 15
+POST_TEXT_LIMIT = 15
 
 
 class Group(models.Model):
@@ -66,7 +66,7 @@ class Post(models.Model):
         verbose_name_plural = 'Посты'
 
     def __str__(self):
-        return self.text[:NUM]
+        return self.text[:POST_TEXT_LIMIT]
 
 
 class Comment(CreatedModel):
@@ -95,7 +95,7 @@ class Comment(CreatedModel):
         verbose_name_plural = 'Комментарии'
 
     def __str__(self):
-        return self.text[:NUM]
+        return self.text[:POST_TEXT_LIMIT]
 
 
 class Follow(models.Model):

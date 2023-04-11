@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
-from posts.models import Group, Post, Comment, Follow, NUM
+from posts.models import Group, Post, Comment, Follow, POST_TEXT_LIMIT
 
 User = get_user_model()
 
@@ -11,20 +11,23 @@ class PostModelTest(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.author = User.objects.create_user(username='auth')
+        cls.group_title = 'test_group'
+        cls.post_text = 'test_post'
+        cls.comment_text = 'test_comment'
         cls.user_follower = User.objects.create_user(username='user_follower')
         cls.group = Group.objects.create(
-            title='Тестовая группа',
+            title=cls.group_title,
             slug='test_slug',
             description='Тестовое описание',
         )
         cls.post = Post.objects.create(
             author=cls.author,
             group=cls.group,
-            text='Тестовый пост',
+            text=cls.post_text,
         )
         cls.comment = Comment.objects.create(
             author=cls.author,
-            text="Тестовый комментарий",
+            text=cls.comment_text,
             post=cls.post
         )
         cls.follow = Follow.objects.create(
@@ -32,46 +35,60 @@ class PostModelTest(TestCase):
             user=cls.user_follower,
         )
 
-    def test_models_post(self):
-        """Проверяем что у моделей пост корректно работает __str__"""
-        self.assertEqual(str(self.post), self.post.text[:NUM])
-
-    def test_models_group(self):
-        """Проверяем что у групп корректно работает __str__"""
-        self.assertEqual(self.group.title, self.group.__str__())
-
-    def test_models_comment(self):
-        """Проверяем что у моделей пост корректно работает __str__"""
-        self.assertEqual(str(self.comment), self.comment.text[:NUM])
+    def test_models_str(self):
+        models_values = [
+            (self.group, self.group_title),
+            (self.post, self.post_text[:POST_TEXT_LIMIT]),
+            (self.comment, self.comment_text[:POST_TEXT_LIMIT])
+        ]
+        for model, expected_value in models_values:
+            with self.subTest():
+                self.assertEqual(str(model), expected_value)
 
     def test_verbose_name(self):
-        field_verboses = [
-            (self.post, 'text', 'Текст поста'),
-            (self.post, 'pub_date', 'Дата публикации'),
-            (self.post, 'author', 'Автор'),
-            (self.post, 'group', 'Группа'),
-            (self.group, 'title', "Название группы"),
-            (self.group, 'description', "Описание группы"),
-            (self.comment, 'post', 'Пост'),
-            (self.comment, 'author', 'Автор'),
-            (self.comment, 'text', 'Текст комментария'),
-            (self.comment, 'created', 'Дата публикации комментария'),
-            (self.follow, 'user', 'Пользователь'),
-            (self.follow, 'author', 'Автор'),
-        ]
-        for model, name, value in field_verboses:
-            with self.subTest(name=name):
-                verbose_name = model._meta.get_field(name).verbose_name
-                self.assertEqual(verbose_name, value)
+        fields_verboses = {
+            Post: {
+                'text': 'Текст поста',
+                'pub_date': 'Дата публикации',
+                'author': 'Автор',
+                'group': 'Группа',
+            },
+            Group: {
+                'title': "Название группы",
+                'description': "Описание группы",
+            },
+            Comment: {
+                'post': 'Пост',
+                'author': 'Автор',
+                'text': 'Текст комментария',
+                'created': 'Дата публикации комментария',
+            },
+            Follow: {
+                'user': 'Пользователь',
+                'author': 'Автор',
+            },
+        }
+        for model, value in fields_verboses.items():
+            for field, verbose_name in value.items():
+                with self.subTest(field=field):
+                    response = model._meta.get_field(field).verbose_name
+                    self.assertEqual(response, verbose_name)
 
     def test_help_text(self):
-        field_help_text = [
-            (self.post, 'text', 'Введите текст поста',),
-            (self.post, 'group', 'Группа, к которой будет относиться пост'),
-            (self.group, 'description', 'Опишите группу'),
-            (self.comment, 'text', 'Введите текст'),
-        ]
-        for model, help_text, value in field_help_text:
-            with self.subTest(help_text=help_text):
-                help_text_response = model._meta.get_field(help_text).help_text
-                self.assertEqual(help_text_response, value)
+        field_help_text = {
+            Post: {
+                'text': 'Введите текст поста',
+                'group': 'Группа, к которой будет относиться пост',
+            },
+            Group: {
+                'description': 'Опишите группу',
+            },
+            Comment: {
+                'text': 'Введите текст',
+            },
+        }
+        for model, value in field_help_text.items():
+            for field, help_text in value.items():
+                with self.subTest(field=field):
+                    response = model._meta.get_field(field).help_text
+                    self.assertEqual(response, help_text)
